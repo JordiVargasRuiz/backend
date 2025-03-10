@@ -7,15 +7,20 @@ import firebase_admin
 import os
 from firebase_admin import credentials, firestore
 
+# Inicialización de Firebase
 cred = credentials.Certificate("rutinasejercicios-6c3a5-firebase-adminsdk-fbsvc-f964c09ba7.json")
 firebase_admin.initialize_app(cred)
 
+# Conexión a Firestore
 db = firestore.client()
 
+# Crear la aplicación FastAPI
 app = FastAPI()
 
+# Obtener el puerto desde la variable de entorno
 port = int(os.environ.get("PORT", 8000))
 
+# Configurar CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,6 +29,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Modelo para el desafío
 class Challenge(BaseModel):
     id: str
     user_id: str
@@ -32,12 +38,19 @@ class Challenge(BaseModel):
     target: int
     progress: int
 
+# Modelo para la creación de desafíos
 class ChallengeCreate(BaseModel):
     user_id: str
     name: str
     description: str
     target: conint(ge=0) 
 
+# Ruta raíz para pruebas
+@app.get("/")
+def root():
+    return {"message": "API is working!"}
+
+# Obtener desafíos de un usuario
 @app.get("/get_challenges", response_model=List[Challenge])
 def get_challenges(user_id: str):
     challenges_ref = db.collection('challenges').where('user_id', '==', user_id).stream()
@@ -59,6 +72,7 @@ def get_challenges(user_id: str):
     
     return user_challenges
 
+# Crear un nuevo desafío
 @app.post("/add_challenge", response_model=Challenge)
 def add_challenge(challenge: ChallengeCreate):
     new_challenge_ref = db.collection('challenges').add({
@@ -80,6 +94,7 @@ def add_challenge(challenge: ChallengeCreate):
         progress=0
     )
 
+# Actualizar el progreso de un desafío
 @app.post("/update_progress/{challenge_id}")
 def update_progress(challenge_id: str, progress: int):
     if progress < 0:
@@ -97,6 +112,7 @@ def update_progress(challenge_id: str, progress: int):
     
     return {"message": f"Progress updated for challenge {challenge_id}!", "progress": new_progress}
 
+# Obtener el progreso de un desafío
 @app.get("/get_progress/{challenge_id}")
 def get_progress(challenge_id: str):
     challenge_ref = db.collection('challenges').document(challenge_id)
@@ -112,6 +128,7 @@ def get_progress(challenge_id: str):
         "target": challenge_data['target']
     }
 
+# Eliminar un desafío
 @app.delete("/delete_challenge/{challenge_id}")
 def delete_challenge(challenge_id: str):
     challenge_ref = db.collection('challenges').document(challenge_id)
@@ -123,3 +140,4 @@ def delete_challenge(challenge_id: str):
     challenge_ref.delete()
     
     return {"message": f"Desafío con ID {challenge_id} eliminado"}
+
