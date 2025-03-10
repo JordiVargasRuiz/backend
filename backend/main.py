@@ -4,6 +4,7 @@ from pydantic import BaseModel, conint
 from typing import List
 from uuid import uuid4
 import firebase_admin
+import os
 from firebase_admin import credentials, firestore
 
 cred = credentials.Certificate("public/backend/rutinasejercicios-6c3a5-firebase-adminsdk-fbsvc-f964c09ba7.json")
@@ -12,6 +13,8 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 app = FastAPI()
+
+port = int(os.environ.get("PORT", 8000))
 
 app.add_middleware(
     CORSMiddleware,
